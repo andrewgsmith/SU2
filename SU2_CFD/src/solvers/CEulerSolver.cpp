@@ -1796,9 +1796,11 @@ void CEulerSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_contain
   const bool low_mach_corr = config->Low_Mach_Correction();
 
   /*--- Use vectorization if the scheme supports it. ---*/
-  if (config->GetKind_Upwind_Flow() == UPWIND::ROE && ideal_gas && !low_mach_corr) {
-    EdgeFluxResidual(geometry, solver_container, config);
-    return;
+  if (ideal_gas && !low_mach_corr) {
+    if (config->GetKind_Upwind_Flow() == UPWIND::ROE || config->GetKind_Upwind_Flow() == UPWIND::MSW) {
+      EdgeFluxResidual(geometry, solver_container, config);
+      return;
+    }
   }
 
   const bool implicit         = (config->GetKind_TimeIntScheme() == EULER_IMPLICIT);
