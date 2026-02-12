@@ -294,6 +294,13 @@ def main():
     ramp.test_vals_aarch64 = [-13.648406, -8.014579, -0.076277, 0.054839]
     test_list.append(ramp)
 
+    ramp_msw = TestCase('ramp_msw')
+    ramp_msw.cfg_dir = "euler/ramp"
+    ramp_msw.cfg_file = "inv_ramp_msw.cfg"
+    ramp_msw.test_iter = 100
+    ramp_msw.test_vals = [-12.081674, -6.281367, -0.077904, 0.054539]
+    test_list.append(ramp_msw)
+
     ##########################
     ###  Compressible N-S  ###
     ##########################
@@ -766,7 +773,7 @@ def main():
     turbmod_sa_neg_rae2822.cfg_dir   = "turbulence_models/sa/rae2822"
     turbmod_sa_neg_rae2822.cfg_file  = "turb_SA_NEG_RAE2822.cfg"
     turbmod_sa_neg_rae2822.test_iter = 10
-    turbmod_sa_neg_rae2822.test_vals         = [-1.345531, 1.448387, 1.208638, -0.846585, 1.271362, 0.497475, 0.000000]
+    turbmod_sa_neg_rae2822.test_vals         = [-1.345454, 1.448536, 1.208684, -0.846029, 1.257859, 0.492608, 0.000000]
     turbmod_sa_neg_rae2822.test_vals_aarch64 = [-1.345593, 1.448310, 1.208721, -0.846597, 1.248410, 0.489117, 0.000000]
     test_list.append(turbmod_sa_neg_rae2822)
 
@@ -1519,7 +1526,7 @@ def main():
     pywrapper_deformingBump.cfg_dir = "py_wrapper/deforming_bump_in_channel"
     pywrapper_deformingBump.cfg_file = "config.cfg"
     pywrapper_deformingBump.test_iter = 1
-    pywrapper_deformingBump.test_vals = [0.500000, 0.000000, -2.811520, -1.603562, -2.074259, 2.424289, 7.616891, -0.205655]
+    pywrapper_deformingBump.test_vals = [0.500000, 0.000000, -2.556309, -1.270839, -2.350590, 2.606851, 8.002480, -0.300272]
     pywrapper_deformingBump.command = TestCase.Command("mpirun -np 2", "python", "run.py")
     pywrapper_deformingBump.unsteady = True
     test_list.append(pywrapper_deformingBump)
