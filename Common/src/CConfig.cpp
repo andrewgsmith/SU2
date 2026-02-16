@@ -869,7 +869,7 @@ void CConfig::SetPointersNull() {
   Marker_Designing            = nullptr;   Marker_GeoEval           = nullptr;    Marker_Plotting   = nullptr;
   Marker_Analyze              = nullptr;   Marker_PyCustom          = nullptr;    Marker_WallFunctions        = nullptr;
   Marker_CfgFile_KindBC       = nullptr;   Marker_All_KindBC        = nullptr;    Marker_SobolevBC  = nullptr;
-  Marker_StrongBC             = nullptr;
+  Marker_StrongBC             = nullptr;   Marker_Create_Copy       = nullptr;
 
   Kind_WallFunctions       = nullptr;
   IntInfo_WallFunctions    = nullptr;
@@ -1528,6 +1528,9 @@ void CConfig::SetConfig_Options() {
   addStringListOption("MARKER_PLOTTING", nMarker_Plotting, Marker_Plotting);
   /*!\brief MARKER_MONITORING\n DESCRIPTION: Marker(s) of the surface where evaluate the non-dimensional coefficients \ingroup Config*/
   addStringListOption("MARKER_MONITORING", nMarker_Monitoring, Marker_Monitoring);
+
+  /*!\brief MARKER_CREATE_COPY\n DESCRIPTION: Marker(s) for which to create copies when reading the mesh \ingroup Config*/
+  addStringListOption("MARKER_CREATE_COPY", nMarker_Create_Copy, Marker_Create_Copy);
 
   /*!\brief MARKER_CONTROL_VOLUME\n DESCRIPTION: Marker(s) of the surface in the surface flow solution file  \ingroup Config*/
   addStringListOption("MARKER_ANALYZE", nMarker_Analyze, Marker_Analyze);
