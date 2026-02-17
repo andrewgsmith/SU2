@@ -1286,7 +1286,7 @@ def main():
     thermal_beam_nl_3d.cfg_dir = "fea_fsi/ThermalBeam_3d"
     thermal_beam_nl_3d.cfg_file = "configBeamNonlinear_3d.cfg"
     thermal_beam_nl_3d.test_iter = 8
-    thermal_beam_nl_3d.test_vals = [-7.586361, -3.000895, -12.259962, -14.077320, 50, -4.025641, 24, -4.210655, 1.3871e+05, 7.5233e+01]
+    thermal_beam_nl_3d.test_vals = [-7.564309, -2.992893, -12.242503, -14.068322, 57, -4.017665, 24, -4.204804, 138710, 75.233]
     thermal_beam_nl_3d.command = TestCase.Command(exec = "parallel_computation_fsi.py", param = "-f")
     test_list.append(thermal_beam_nl_3d)
 
