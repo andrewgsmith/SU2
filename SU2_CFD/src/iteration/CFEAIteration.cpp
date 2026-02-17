@@ -40,6 +40,7 @@ void CFEAIteration::Iterate(COutput* output, CIntegration**** integration, CGeom
 
   const bool nonlinear = (config[val_iZone]->GetGeometricConditions() == STRUCT_DEFORMATION::LARGE);
   const bool linear = (config[val_iZone]->GetGeometricConditions() == STRUCT_DEFORMATION::SMALL);
+  const bool heat = config[val_iZone]->GetWeakly_Coupled_Heat();
   const bool disc_adj_fem = config[val_iZone]->GetDiscrete_Adjoint();
 
   /*--- Loads applied in steps (not used for discrete adjoint). ---*/
@@ -48,24 +49,60 @@ void CFEAIteration::Iterate(COutput* output, CIntegration**** integration, CGeom
   /*--- We need to restore the current inner iter in discrete adjoint cases because file output depends on it. ---*/
   const auto CurIter = config[val_iZone]->GetInnerIter();
 
+  CGeometry** geo = geometry[val_iZone][val_iInst];
   CIntegration* feaIntegration = integration[val_iZone][val_iInst][FEA_SOL];
   CSolver* feaSolver = solver[val_iZone][val_iInst][MESH_0][FEA_SOL];
+
+  const auto nPoint = geo[MESH_0]->GetnPoint();
+  const auto nDim = geo[MESH_0]->GetnDim();
+
+  su2activematrix Coords;
+  if (nonlinear && heat && Coords.empty()) {
+    /*--- Save the mesh coordinates to solve the heat equations in the deformed configuration
+     * and then restore the coordinates for the FEA solver. We could use CoordsOld of CPoint but
+     * that would require accounting for a lot of physics-specific logic in a geometry class. ---*/
+    Coords = geo[MESH_0]->nodes->GetCoord();
+  }
+
+  auto IterateHeat = [&]() {
+    /*--- Update the FVM mesh for the heat solver based on the structural deformations. ---*/
+    if (nonlinear) {
+      SU2_OMP_PARALLEL_(for schedule(static))
+      for (auto iPoint = 0ul; iPoint < nPoint; ++iPoint) {
+        for (auto iDim = 0u; iDim < nDim; ++iDim) {
+          geo[MESH_0]->nodes->SetCoord(iPoint, iDim, Coords(iPoint, iDim) + feaSolver->GetNodes()->GetSolution(iPoint, iDim));
+        }
+      }
+      END_SU2_OMP_PARALLEL
+
+      CGeometry::UpdateGeometry(geo, config[val_iZone]);
+    }
+
+    config[val_iZone]->SetGlobalParam(MAIN_SOLVER::HEAT_EQUATION, RUNTIME_HEAT_SYS);
+    integration[val_iZone][val_iInst][HEAT_SOL]->SingleGrid_Iteration(geometry, solver, numerics, config,
+                                                                      RUNTIME_HEAT_SYS, val_iZone, val_iInst);
+
+    /*--- Restore the coordinates for the FEA solver. ---*/
+    if (nonlinear) {
+      SU2_OMP_PARALLEL_(for schedule(static))
+      for (auto iPoint = 0ul; iPoint < nPoint; ++iPoint) {
+        for (auto iDim = 0u; iDim < nDim; ++iDim) {
+          geo[MESH_0]->nodes->SetCoord(iPoint, iDim, Coords(iPoint, iDim));
+        }
+      }
+      END_SU2_OMP_PARALLEL
+    }
+  };
 
   auto Iterate = [&](unsigned long IntIter) {
     config[val_iZone]->SetInnerIter(IntIter);
 
-    /*--- Add heat solver integration step. ---*/
-    if (config[val_iZone]->GetWeakly_Coupled_Heat()) {
-      config[val_iZone]->SetGlobalParam(MAIN_SOLVER::HEAT_EQUATION, RUNTIME_HEAT_SYS);
-      integration[val_iZone][val_iInst][HEAT_SOL]->SingleGrid_Iteration(geometry, solver, numerics, config,
-                                                                        RUNTIME_HEAT_SYS, val_iZone, val_iInst);
-    }
+    /*--- Heat transfer equations. ---*/
+    if (heat) IterateHeat();
 
-    /*--- FEA equations ---*/
+    /*--- FEA equations. ---*/
     config[val_iZone]->SetGlobalParam(MAIN_SOLVER::FEM_ELASTICITY, RUNTIME_FEA_SYS);
     feaIntegration->Structural_Iteration(geometry, solver, numerics, config, RUNTIME_FEA_SYS, val_iZone, val_iInst);
-
-    // TODO(pedro): Update the mesh coordinates for the heat solver.
 
     if (!disc_adj_fem) {
       StopCalc = Monitor(output, integration, geometry, solver, numerics, config, surface_movement, grid_movement,
@@ -87,7 +124,7 @@ void CFEAIteration::Iterate(COutput* output, CIntegration**** integration, CGeom
         break;
       }
       /*--- Linear elasticity without thermal effects only needs one iteration. ---*/
-      if (linear && !config[val_iZone]->GetWeakly_Coupled_Heat()) {
+      if (linear && !heat) {
         output->SetConvergence(true);
         break;
       }
